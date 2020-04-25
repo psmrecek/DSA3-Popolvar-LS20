@@ -25,6 +25,10 @@ int getRight(int i) {
 	return i * 2 + 2;
 }
 
+int getMin(int** heap) {
+	return (*heap)[0];
+}
+
 void exchange(int* x, int* y) {
 	int temp = *x;
 	*x = *y;
@@ -65,7 +69,7 @@ void heapify(int** heap, int heapSize, int fix) {
 	else
 		min = fix;
 
-	if (right < heapSize && (*heap)[right] >(*heap)[min])
+	if (right < heapSize && (*heap)[right] < (*heap)[min])
 		min = right;
 	if (min != fix) {
 		exchange(&(*heap)[fix], &(*heap)[min]);
@@ -74,7 +78,7 @@ void heapify(int** heap, int heapSize, int fix) {
 }
 
 int extractMin(int **heap, int *heapSize) {
-	printf("%d\n", *heapSize);
+//	printf("%d\n", *heapSize);
 	(*heapSize)--;
 	if (*heapSize < 0)
 		return INF;
@@ -97,10 +101,15 @@ void printHeap(int* heap, int heapSize) {
 	printf("\n");
 }
 
-void printMin(int** heap, int *heapSize) {
+void printExtractMin(int** heap, int *heapSize) {
 	int min = extractMin(&*heap, &*heapSize);
 	printf("Min je %d\n", min);
 	printHeap(*heap, *heapSize);
+}
+
+void delete(int **heap, int *heapSize, int i) {
+	decrease(&*heap, i, -500);
+	extractMin(&*heap, &*heapSize);
 }
 
 
@@ -122,22 +131,39 @@ int main()
 	int *heap = malloc(capacity * sizeof(int));
 	int heapSize = 0;
 
-	insert(&heap, &heapSize, 5);
-	printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 5);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 4);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 3);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 2);
+	//printHeap(heap, heapSize);
+	//decrease(&heap, 2, -1);
+	//printHeap(heap, heapSize);
+	//printMin(&heap, &heapSize);
 
-	insert(&heap, &heapSize, 4);
-	printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 3);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 2);
+	//printHeap(heap, heapSize);
+	//delete(&heap, &heapSize, 1);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 15);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 5);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 4);
+	//printHeap(heap, heapSize);
+	//insert(&heap, &heapSize, 45);
+	//printHeap(heap, heapSize);
+	//printf("extractMin: %d\n", extractMin(&heap, &heapSize));
+	//printHeap(heap, heapSize);
+	//printf("getMin %d\n", getMin(&heap));
+	//decrease(&heap, 2, 1);
+	//printf("getMin %d\n", getMin(&heap));
+	//printHeap(heap, heapSize);
 
-	insert(&heap, &heapSize, 3);
-	printHeap(heap, heapSize);
-
-	insert(&heap, &heapSize, 2);
-	printHeap(heap, heapSize);
-
-	decrease(&heap, 2, -1);
-	printHeap(heap, heapSize);
-
-	printMin(&heap, &heapSize);
 
 	return 0;
 }
