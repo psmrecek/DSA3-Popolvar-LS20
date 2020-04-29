@@ -31,6 +31,43 @@ int getMin(VERTEX** heap) {
 	return (*heap)[0].lenght;
 }
 
+void top(VERTEX min, int *x, int *y) {
+	*x = min.x - 1;
+	*y = min.y;
+}
+
+void right(VERTEX min, int* x, int* y) {
+	*x = min.x;
+	*y = min.y + 1;
+}
+
+void bottom(VERTEX min, int* x, int* y) {
+	*x = min.x + 1;
+	*y = min.y;
+}
+
+void left(VERTEX min, int* x, int* y) {
+	*x = min.x;
+	*y = min.y - 1;
+}
+
+int validXY(int x, int y, int n, int m, int heapSize, int **mapHeap) {
+	if (x < n && x >= 0 && y < m && y >= 0 && mapHeap[x][y] <= heapSize)
+		return 1;
+	return 0;
+}
+
+int verticesLen(int x, int y, char** mapa) {
+	int set;
+	char map = mapa[x][y];
+	if (map == 'N')
+		return INF;
+	else if(map == 'H')
+		return 2;
+	else
+		return 1;
+}
+
 void exchange(VERTEX* a, VERTEX* b, int*** mapHeap) {
 	int vertex1 = (*mapHeap)[(*a).x][(*a).y];
 	(*mapHeap)[(*a).x][(*a).y] = (*mapHeap)[(*b).x][(*b).y];
@@ -134,18 +171,26 @@ void printExtractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
 }
 
 void delete(VERTEX** heap, int* heapSize, int i, int*** mapHeap) {
-	decrease(&*heap, i, -500, &(*mapHeap));
+	decrease(&*heap, i, -INF, &(*mapHeap));
 	extractMin(&*heap, &*heapSize, &(*mapHeap));
 }
 
 
-void transform(char** mapa) {
-
+void reverse(int **path, int lenght) {
+	lenght--;
+	int temp, start = 0;
+	while (start < lenght) {
+		temp = (*path)[start];
+		(*path)[start] = (*path)[lenght];
+		(*path)[lenght] = temp;
+		start++;
+		lenght--;
+	}
 }
 
 int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 	// Zadanim pozadovana funkcia
-	int* path = NULL;
+	int* path = malloc(1000*sizeof(int));						// Dlzku treba ale nastavovat dynamicky
 	*dlzka_cesty = 0;
 
 	int capacity = 2 * n * m;
@@ -168,6 +213,7 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 				heap[index].parentX = NULL;
 				heap[index].parentY = NULL;
 				heap[index].type = mapa[i][j];
+				//printf("%c ", mapa[i][j]);
 				mapHeap[i][j] = index;
 				if (mapa[i][j] == 'D')
 				{
@@ -176,42 +222,167 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 				}
 				index++;
 			}
+			//printf("\n");
 		}
-		heap[0].lenght = 0;
+		heap[0].lenght = verticesLen(0, 0, mapa);
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < m; j++)
+			{
+				if (mapa[i][j] == 'N') {
+					delete(&heap, &heapSize, mapHeap[i][j], &mapHeap);
+				}
+			}
+		}
+		
+//		printHeap(heap, heapSize, &mapHeap);
+//		printf("%c %c %c", mapa[0][0], mapa[1][0], mapa[2][0]);
 
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				printf("%3c", mapa[i][j]);
-			}
-			printf("\n");
-		}
-		printf("-----------------\n");
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				printf("%3d", mapHeap[i][j]);
-			}
-			printf("\n");
-		}
-		printf("-----------------\n");
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				int id = mapHeap[i][j];
-				printf("%3c", heap[id].type);
-			}
-			printf("\n");
-		}
-		printf("-----------------\n");
+		while (heapSize != 0) {
+			VERTEX min = extractMin(&heap, &heapSize, &mapHeap);
+			int index = mapHeap[min.x][min.y];
+			int tx, ty, rx, ry, bx, by, lx, ly;
+			top(min, &tx, &ty);
+			right(min, &rx, &ry);
+			bottom(min, &bx, &by);
+			left(min, &lx, &ly);
 
-		printExtractMin(&heap, &heapSize, &mapHeap);
-		decrease(&heap, mapHeap[dragonX][dragonY], 5, &mapHeap);
-		printf("-----------------\n");
-		printExtractMin(&heap, &heapSize, &mapHeap);
+//			printf("[%d %d] ma platnych susedov ", min.x, min.y);
+			
+			if (validXY(tx, ty, n, m, heapSize, mapHeap)) {
+//				printf("t[%d %d] ", tx, ty);
+				int id = mapHeap[tx][ty];
+				int newLenght = min.lenght + verticesLen(tx, ty, mapa);
+				if (heap[id].lenght > newLenght)
+				{
+					//heap[id].lenght = newLenght;
+					heap[id].parentX = min.x;
+					heap[id].parentY = min.y;
+					decrease(&heap, id, newLenght, &mapHeap);
+				}
+			}	
+			if (validXY(rx, ry, n, m, heapSize, mapHeap)) {
+//				printf("r[%d %d] ", rx, ry);
+				int id = mapHeap[rx][ry];
+				int newLenght = min.lenght + verticesLen(rx, ry, mapa);
+				if (heap[id].lenght > newLenght)
+				{
+					//heap[id].lenght = newLenght;
+					heap[id].parentX = min.x;
+					heap[id].parentY = min.y;
+					decrease(&heap, id, newLenght, &mapHeap);
+				}
+			}
+			if (validXY(bx, by, n, m, heapSize, mapHeap)) {
+//				printf("b[%d %d] ", bx, by);
+				int id = mapHeap[bx][by];
+				int newLenght = min.lenght + verticesLen(bx, by, mapa);
+				if (heap[id].lenght > newLenght)
+				{
+					//heap[id].lenght = newLenght;
+					heap[id].parentX = min.x;
+					heap[id].parentY = min.y;
+					decrease(&heap, id, newLenght, &mapHeap);
+				}
+			}
+			if (validXY(lx, ly, n, m, heapSize, mapHeap)){
+//				printf("l[%d %d] ", lx, ly);
+				int id = mapHeap[lx][ly];
+				int newLenght = min.lenght + verticesLen(lx, ly, mapa);
+				if (heap[id].lenght > newLenght)
+				{
+					//heap[id].lenght = newLenght;
+					heap[id].parentX = min.x;
+					heap[id].parentY = min.y;
+					decrease(&heap, id, newLenght, &mapHeap);
+				}
+			}
+			//printf("\n");
+		}
+
+		VERTEX temp = heap[mapHeap[dragonX][dragonY]];
+//		printf("[%d %d]\n", temp.x, temp.y);
+
+		int count = 0;
+		while (temp.x != 0 || temp.y != 0)
+		{
+			//printf("[%d %d]\n", temp.y, temp.x);
+			path[count++] = temp.x;
+			path[count++] = temp.y;
+
+			temp = heap[mapHeap[temp.parentX][temp.parentY]];
+		}
+		path[count++] = 0;
+		path[count++] = 0;
+		*dlzka_cesty = count / 2;
+
+		reverse(&path, count);
+
+		for (int i = 0; i < count; i+=2)
+		{
+			printf("%d %d\n", path[i], path[i + 1]);
+		}
+
+		return path;
+//		printf("%d\n",*dlzka_cesty);
+
+		//for (int i = 0; i < n; i++)
+		//{
+		//	for (int j = 0; j < m; j++)
+		//	{
+		//		printf("%3c", mapa[i][j]);
+		//	}
+		//	printf("\n");
+		//}
+		//printf("-----------------\n");
+		//for (int i = 0; i < n; i++)
+		//{
+		//	for (int j = 0; j < m; j++)
+		//	{
+		//		printf("%3d", mapHeap[i][j]);
+		//	}
+		//	printf("\n");
+		//}
+		//printf("-----------------\n");
+		//for (int i = 0; i < n; i++)
+		//{
+		//	for (int j = 0; j < m; j++)
+		//	{
+		//		int id = mapHeap[i][j];
+		//		printf("%3c", heap[id].type);
+		//	}
+		//	printf("\n");
+		//}
+		//printf("-----------------\n");
+
+		//printHeap(heap, heapSize, &mapHeap);
+		//for (int i = 0; i < 10; i++)
+		//{
+		//	extractMin(&heap, &heapSize, &mapHeap);
+		//}
+		//printf("-----------------Odstranenych 10 prvkov\n");
+		//printHeap(heap, heapSize, &mapHeap);
+		//printf("-----------------Odstranujem predposledny prvok\n");
+		//extractMin(&heap, &heapSize, &mapHeap);
+		//printHeap(heap, heapSize, &mapHeap);
+		//printf("-----------------Odstranujem posledny prvok\n");
+		//extractMin(&heap, &heapSize, &mapHeap);
+		//printHeap(heap, heapSize, &mapHeap);
+		//printf("%d\n", heapSize);
+
+		//for (int i = 0; i < n; i++)
+		//{
+		//	for (int j = 0; j < m; j++)
+		//	{
+		//		int id = mapHeap[i][j];
+		//		printf("%3c", heap[id].type);
+		//	}
+		//	printf("\n");
+		//}
+		//printf("-----------------\n");
+		
+
+
 
 }
 
@@ -242,26 +413,36 @@ int main()
 	char** mapa;
 	int i, test, dlzka_cesty, cas, * cesta;
 	int n = 0, m = 0, t = 0;
+	FILE* f;
 
-		
-	n = 10;	// pocet riadkov
-	m = 10;	// pocet stlpcov
-	t = 12;
-	mapa = (char**)malloc(n * sizeof(char*));
-	mapa[0] = "CCHCNHCCHN";
-	mapa[1] = "NNCCCHHCCC";
-	mapa[2] = "DNCCNNHHHC";
-	mapa[3] = "CHHHCCCCCC";
-	mapa[4] = "CCCCCNHHHH";
-	mapa[5] = "PCHCCCNNNN";
-	mapa[6] = "NNNNNHCCCC";
-	mapa[7] = "CCCCCPCCCC";
-	mapa[8] = "CCCNNHHHHH";
-	mapa[9] = "HHHPCCCCCC";
-	cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
+	//n = 4;	// pocet riadkov
+	//m = 3;	// pocet stlpcov
+	//t = 12;
+	//mapa = (char**)malloc(n * sizeof(char*));
+	//mapa[0] = "CCH";
+	//mapa[1] = "NNC";
+	//mapa[2] = "DNC";
+	//mapa[3] = "CHH";
+	//cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
+
+	//n = 10;	// pocet riadkov
+	//m = 10;	// pocet stlpcov
+	//t = 12;
+	//mapa = (char**)malloc(n * sizeof(char*));
+	//mapa[0] = "CCHCNHCCHN";
+	//mapa[1] = "NNCCCHHCCC";
+	//mapa[2] = "DNCCNNHHHC";
+	//mapa[3] = "CHHHCCCCCC";
+	//mapa[4] = "CCCCCNHHHH";
+	//mapa[5] = "PCHCCCNNNN";
+	//mapa[6] = "NNNNNHCCCC";
+	//mapa[7] = "CCCCCPCCCC";
+	//mapa[8] = "CCCNNHHHHH";
+	//mapa[9] = "HHHPCCCCCC";
+	//cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
 			
 		
-	cas = 0;
+	//cas = 0;
 	//for (i = 0; i < dlzka_cesty; i++) {
 	//	printf("%d %d\n", cesta[i * 2], cesta[i * 2 + 1]);
 	//	if (mapa[cesta[i * 2 + 1]][cesta[i * 2]] == 'H')
@@ -276,11 +457,28 @@ int main()
 	//		printf("Neplatny posun Popolvara!\n");
 	//}
 	//printf("%d\n", cas);
-//	free(cesta);
+	//free(cesta);
 	//for (i = 0; i < n; i++) {
 	//	free(mapa[i]);
 	//}
-//	free(mapa);
+	//free(mapa);
+
+			f = fopen("vstup3.txt", "r");
+			if (f)
+				fscanf(f, "%d %d %d", &n, &m, &t);
+			else
+				return 0;
+			mapa = (char**)malloc(n * sizeof(char*));
+			for (i = 0; i < n; i++) {
+				mapa[i] = (char*)malloc(m * sizeof(char));
+				for (int j = 0; j < m; j++) {
+					char policko = fgetc(f);
+					if (policko == '\n') policko = fgetc(f);
+					mapa[i][j] = policko;
+				}
+			}
+			fclose(f);
+			cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
 	
 	return 0;
 }
