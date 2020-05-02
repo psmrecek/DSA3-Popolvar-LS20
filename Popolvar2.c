@@ -655,13 +655,27 @@ int main()
 	//mapa[9] = "HHHPCCCCCC";
 	//cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
 			
-//	f = fopen("jednaPrincezna.txt", "r");
-//	f = fopen("kritickaMapa.txt", "r");
-//	f = fopen("test.txt", "r");
+	//f = fopen("jednaPrincezna.txt", "r");
+	//f = fopen("kritickaMapa.txt", "r");
+	//f = fopen("vzorovyVstup.txt", "r");
 
-	//f = fopen("vstup1.txt", "r");
-	//f = fopen("vstup2.txt", "r");
-	f = fopen("vstup3.txt", "r");
+	//f = fopen("vstup1Delincak.txt", "r");
+	//f = fopen("vstup2Delincak.txt", "r");
+	//f = fopen("vstup3Delincak.txt", "r");
+
+	f = fopen("vstup0Buban.txt", "r");
+	//f = fopen("vstup1Buban.txt", "r");
+	//f = fopen("vstup2Buban.txt", "r");
+	//f = fopen("vstup3Buban.txt", "r");
+	//f = fopen("vstup4Buban.txt", "r");
+	//f = fopen("vstup5Buban.txt", "r");
+	//f = fopen("vstup6Buban.txt", "r");
+	//f = fopen("vstup7Buban.txt", "r");
+	//f = fopen("vstup8Buban.txt", "r");
+	//f = fopen("vstup9Buban.txt", "r");
+	//f = fopen("vstupMini0Buban.txt", "r");
+	//f = fopen("vstupMini1Buban.txt", "r");
+
 	if (f)
 		fscanf(f, "%d %d %d", &n, &m, &t);
 	else
