@@ -13,13 +13,11 @@ typedef struct princess {
 	VERTEX *heap;
 	int **mapHeap;
 	int heapSize;
-	int n;
 }PRINCESS;
 
-int heap[255];				// minimalna binarna halda / min heap
-							// moze to byt globalna premenna?
+int k;
 
-							// https://www.youtube.com/watch?v=lAXZGERcDf4
+// https://www.youtube.com/watch?v=lAXZGERcDf4
 
 // Funkcie pre binarnu haldu
 
@@ -297,6 +295,71 @@ void copyHeap(VERTEX *sHeap, VERTEX **dHeap, int **sMapHeap, int ***dMapHeap, in
 //	return count;
 //}
 
+void exchange2(int* x, int* y)
+{
+	int temp;
+	temp = *x;
+	*x = *y;
+	*y = temp;
+}
+
+int k = 0;
+
+void permute(int* Arr, int start, int size, int*** Permutations)
+{
+	if (start == size) {
+		for (int i = 0; i <= size; i++)
+		{
+			(*Permutations)[k][i] = Arr[i];
+		}
+		k++;
+	}
+	else
+	{
+		for (int i = start; i <= size; i++)
+		{
+			exchange2((Arr + start), (Arr + i));
+			permute(Arr, start + 1, size, &*Permutations);
+			exchange2((Arr + start), (Arr + i));
+		}
+	}
+}
+
+int factorial(int k) {
+	int factor = 1;
+	for (int i = 1; i <= k; i++)
+	{
+		factor *= i;
+	}
+	return factor;
+}
+
+int* pathCreator(VERTEX *heap, int **mapHeap, int **path, int dlzka_cesty, int startX, int startY, int endX, int endY) {
+	int count = 0;
+	VERTEX temp = heap[mapHeap[endX][endY]];
+	int* newPath = malloc(10000 * sizeof(int));
+	while (temp.x != startX || temp.y != startY)
+	{
+		newPath[count++] = temp.x;
+		newPath[count++] = temp.y;
+		if (temp.parentX < 0 || temp.parentY < 0)
+		{
+			printf("K princeznej neexistuje cesta!\n");
+			printf("[%d %d] [%d %d]\n", startX, startY, endX, endY);
+			return 0;
+		}
+		else
+		{
+			temp = heap[mapHeap[temp.parentX][temp.parentY]];
+		}
+	}
+
+	reverse(&newPath, count);
+	addToArray(&*path, newPath, dlzka_cesty * 2, count);
+	dlzka_cesty += count / 2;
+	return dlzka_cesty;
+}
+
 int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 	// Zadanim pozadovana funkcia
 
@@ -412,36 +475,39 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 		djikstra(&dragonHeap, &dragonHeapSize, &dragonMapHeap, n, m, mapa);
 
 		if (princessCounter == 1) {
-			int* dragonPath = malloc(1000 * sizeof(int));						// Dlzku treba ale nastavovat dynamicky
-			int count2 = 0;
-			VERTEX temp2 = dragonHeap[dragonMapHeap[princesses[0]][princesses[1]]];
-			while (temp2.x != dragonX || temp2.y != dragonY)
-			{
-				//printf("[%d %d]\n", temp.y, temp.x);
-				dragonPath[count2++] = temp2.x;
-				dragonPath[count2++] = temp2.y;
+			//int* dragonPath = malloc(1000 * sizeof(int));						// Dlzku treba ale nastavovat dynamicky
+			//int count2 = 0;
+			//VERTEX temp2 = dragonHeap[dragonMapHeap[princesses[0]][princesses[1]]];
+			//while (temp2.x != dragonX || temp2.y != dragonY)
+			//{
+			//	//printf("[%d %d]\n", temp.y, temp.x);
+			//	dragonPath[count2++] = temp2.x;
+			//	dragonPath[count2++] = temp2.y;
 
-				if (temp2.parentX < 0 || temp2.parentY < 0)
-				{
-					printf("K princeznej neexistuje cesta!\n");
-					*dlzka_cesty = 0;
-					return path;
-				}
-				else 
-				{
-					temp2 = dragonHeap[dragonMapHeap[temp2.parentX][temp2.parentY]];
-				}
-			}
-			reverse(&dragonPath, count2);
-			addToArray(&path, dragonPath, count, count2);
-			*dlzka_cesty += count2 / 2;
+			//	if (temp2.parentX < 0 || temp2.parentY < 0)
+			//	{
+			//		printf("K princeznej neexistuje cesta!\n");
+			//		*dlzka_cesty = 0;
+			//		return path;
+			//	}
+			//	else 
+			//	{
+			//		temp2 = dragonHeap[dragonMapHeap[temp2.parentX][temp2.parentY]];
+			//	}
+			//}
+			//reverse(&dragonPath, count2);
+			//addToArray(&path, dragonPath, count, count2);
+			//*dlzka_cesty += count2 / 2;
+
+			*dlzka_cesty = pathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, princesses[0], princesses[1]);
 		}
 		else
 		{
 			PRINCESS* pr = malloc(princessCounter * sizeof(PRINCESS));
 			for (int i = 0; i < princessCounter; i++)
 			{
-				pr[i].n = i;
+				pr[i].x = princesses[i * 2];
+				pr[i].y = princesses[i * 2 + 1];
 				copyHeap(originalHeap, &(pr[i].heap), originalMapHeap, &(pr[i].mapHeap), originalHeapSize, &(pr[i].heapSize), n, m);
 				decrease(&(pr[i].heap), pr[i].mapHeap[princesses[i * 2]][princesses[i * 2 + 1]], 1, &(pr[i].mapHeap));
 				djikstra(&(pr[i].heap), &(pr[i].heapSize), &(pr[i].mapHeap), n, m, mapa);
@@ -451,35 +517,118 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 			int** matrix = (int**)malloc(matrixSize * sizeof(int*));
 			for (int i = 0; i < (princessCounter + 1); i++) {
 				matrix[i] = (int*)malloc(matrixSize * sizeof(int));
-				memset(matrix[i], -1, matrixSize * sizeof(int));
+				memset(matrix[i], 0, matrixSize * sizeof(int));
 			}
 
 			for (int i = 0; i < princessCounter; i++)
 			{
 				matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].lenght;
+				matrix[i + 1][0] = matrix[0][i + 1];
 			}
 
 			for (int i = 0; i < princessCounter; i++)
 			{
 				for (int j = i + 1; j < princessCounter; j++)
 				{
-					matrix[i+1][j+1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
+					matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
+					matrix[j + 1][i + 1] = matrix[i + 1][j + 1];
 				}
 			}
 
-			for (int i = 0; i < matrixSize; i++)
+			//for (int i = 0; i < matrixSize; i++)
+			//{
+			//	for (int j = 0; j < matrixSize; j++)
+			//	{
+			//		printf("%2d ", matrix[i][j]);
+			//	}
+			//	printf("\n");
+			//}
+			//printf("\n");
+
+			int newSize = matrixSize - 1;
+			int* Arr = malloc(newSize * sizeof(int));
+			for (int i = 0; i < newSize; i++)
 			{
-				for (int j = 0; j < matrixSize; j++)
+				Arr[i] = i + 1;
+			}
+
+
+			int factor = factorial(newSize);
+			int** Permutations = (int**)malloc(factor * sizeof(int*));
+			for (int i = 0; i < factor; i++) {
+				Permutations[i] = (int*)malloc(newSize * sizeof(int));
+				//		memset(matrix[i], 0, newSize * sizeof(int));
+			}
+
+			k = 0;
+			permute(Arr, 0, newSize - 1, &Permutations);
+
+			//printf("-------------\n");
+			//for (int i = 0; i < factor; i++)
+			//{
+			//	for (int j = 0; j < newSize; j++)
+			//	{
+			//		printf("%d ", Permutations[i][j]);
+			//	}
+			//	printf("\n");
+			//}
+
+			//printf("-------------\n");
+
+			int min = INF;
+			int* configuration = malloc(matrixSize * sizeof(int));
+
+			int* tempArray = malloc(matrixSize * sizeof(int));
+			for (int i = 0; i < factor; i++)
+			{
+				tempArray[0] = 0;
+				for (int j = 1; j < matrixSize; j++)
 				{
-					printf("%2d ", matrix[i][j]);
+					tempArray[j] = Permutations[i][j - 1];
 				}
-				printf("\n");
+				
+				int l = 1;
+				int tempMin = 0;
+				for (int k = 0; k < matrixSize - 1; k++)
+				{
+					tempMin += matrix[tempArray[k]][tempArray[l]];
+//					printf("%d ", matrix[tempArray[k]][tempArray[l]]);
+					l++;
+				}
+				if (min > tempMin)
+				{
+					min = tempMin;
+					for (int i = 0; i < matrixSize; i++)
+					{
+						configuration[i] = tempArray[i];
+					}
+				}
 			}
 			
+			int princessIndex = configuration[1] - 1;
+			int prinX = princesses[princessIndex * 2];
+			int prinY = princesses[princessIndex * 2 + 1];
+//			printf("%d %d\n", prinX, prinY);
+			*dlzka_cesty = pathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, prinX, prinY);
+
+			for (int i = 2; i < matrixSize; i++)
+			{
+				int oldPrincessIndex = configuration[i - 1] - 1;
+				princessIndex = configuration[i] - 1;
+
+				prinX = princesses[princessIndex * 2];
+				prinY = princesses[princessIndex * 2 + 1];
+
+//				printf("%d %d\n", pr[oldPrincessIndex].x, pr[oldPrincessIndex].y);
+//				printf("%d %d\n", prinX, prinY);
+				*dlzka_cesty = pathCreator(pr[oldPrincessIndex].heap, pr[oldPrincessIndex].mapHeap, &path, *dlzka_cesty, pr[oldPrincessIndex].x, pr[oldPrincessIndex].y, prinX, prinY);
+
+//				printf("%d %d\n", prinX, prinY);
+			}
+//			printf("-------------\n");
 		}
 
 //		printf("%d\n", princessCounter);
-
 		return path;
 }
 
@@ -507,7 +656,12 @@ int main()
 	//cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
 			
 //	f = fopen("jednaPrincezna.txt", "r");
-	f = fopen("test.txt", "r");
+//	f = fopen("kritickaMapa.txt", "r");
+//	f = fopen("test.txt", "r");
+
+	//f = fopen("vstup1.txt", "r");
+	//f = fopen("vstup2.txt", "r");
+	f = fopen("vstup3.txt", "r");
 	if (f)
 		fscanf(f, "%d %d %d", &n, &m, &t);
 	else
