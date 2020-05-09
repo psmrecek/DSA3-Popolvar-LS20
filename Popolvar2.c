@@ -203,7 +203,7 @@
 //
 //		if (temp.parentX == -1 || temp.parentY == -1)
 //		{
-//			if (temp.x != 0 && temp.y != 0)
+//			if (!(temp.x == 0 && temp.y == 0))
 //			{
 //				*dlzka_cesty = 0;
 //				return;
