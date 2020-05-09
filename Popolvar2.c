@@ -1,43 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
 #define INF 2147483647
 
-typedef struct vertex {
+typedef struct vertex {		// struktura vrcholu v halde
 	int x, y;				// indexy do reprezentacie grafu
 	int parentX, parentY;	// indexy na rodica
 	int lenght;				// dlzka cesty
 }VERTEX;
 
-typedef struct princess {
-	int x, y;
-	VERTEX *heap;
-	int **mapHeap;
-	int heapSize;
+typedef struct princess {	// struktura konkretnej princeznej
+	int x, y;				// indexy princeznej na mape
+	VERTEX *heap;			// smernik na binarnu haldu konkretnej princeznej
+	int **mapHeap;			// smernik na mapu binarnej haldy konkretnej princeznej
+	int heapSize;			// velkost binarnej haldy konkretnej princeznej
 }PRINCESS;
 
-int k;
-
-// https://www.youtube.com/watch?v=lAXZGERcDf4
+int numberOfPermutations;	// globalna premenna urcujuca pocet permutacii ciest k princeznam
 
 // Funkcie pre binarnu haldu
 
-int getParent(int i) {
+int getParent(int i) {		// vrati index rodica prvku v binarnej halde
 	return (i - 1) / 2;
 }
 
-int getLeft(int i) {
+int getLeft(int i) {		// vrati index laveho potomka prvku v binarnej halde
 	return i * 2 + 1;
 }
 
-int getRight(int i) {
+int getRight(int i) {		// vrati index praveho potomka v binarnej halde
 	return i * 2 + 2;
 }
 
-int getMin(VERTEX** heap) {
+int getMin(VERTEX** heap) {	// vrati minimalny prvok v binarnej halde (pracujem s haldou vrcholou, ktora je zoradena podla dlzky cesty k vrcholu)
 	return (*heap)[0].lenght;
 }
 
 void exchange(VERTEX* a, VERTEX* b, int*** mapHeap) {
+							// vymena 2 vrcholov v halde cez smerniky
 	int vertex1 = (*mapHeap)[(*a).x][(*a).y];
 	(*mapHeap)[(*a).x][(*a).y] = (*mapHeap)[(*b).x][(*b).y];
 	(*mapHeap)[(*b).x][(*b).y] = vertex1;
@@ -48,6 +50,7 @@ void exchange(VERTEX* a, VERTEX* b, int*** mapHeap) {
 }
 
 void fixHeapUp(VERTEX** heap, int fix, int*** mapHeap) {
+							// oprava binarnej haldy po vlozeni prvku do haldy
 	int parent = getParent(fix);
 
 	if (parent < 0)
@@ -62,16 +65,19 @@ void fixHeapUp(VERTEX** heap, int fix, int*** mapHeap) {
 }
 
 void insert(VERTEX** heap, int* heapSize, int key, int*** mapHeap) {
+							// vlozenie prvku do haldy
 	(*heap)[(*heapSize)++].lenght = key;
 	fixHeapUp(&*heap, *heapSize - 1, &(*mapHeap));
 }
 
 void decrease(VERTEX** heap, int i, int key, int*** mapHeap) {
+							// zmensenie kluca konkretneho prvku v halde a nasledna oprava haldy
 	(*heap)[i].lenght = key;
 	fixHeapUp(*&heap, i, &(*mapHeap));
 }
 
 void heapify(VERTEX** heap, int heapSize, int fix, int*** mapHeap) {
+							// funkcia heapify pre binarnu haldu vrcholov
 	int left = getLeft(fix);
 	int right = getRight(fix);
 	int min;
@@ -90,8 +96,7 @@ void heapify(VERTEX** heap, int heapSize, int fix, int*** mapHeap) {
 }
 
 VERTEX extractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
-	
-	//	printf("%d\n", *heapSize);
+							// odstranenie minimalneho - tj prveho prvku z binarnej haldy
 	(*heapSize)--;
 	VERTEX min;
 	min.x = -1;
@@ -114,62 +119,29 @@ VERTEX extractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
 }
 
 void printHeap(VERTEX* heap, int heapSize, int*** mapHeap) {
+							// pomocna funkcia na vypis aktualne celej haldy
 	for (int i = 0; i < heapSize; i++)
 		printf("[%d %d] %d | Poradie %d = %d mapHeap\n", heap[i].x, heap[i].y, heap[i].lenght, i, (*mapHeap)[heap[i].x][heap[i].y]);
 	printf("\n");
 }
 
 void printExtractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
+							// pomocna funkcia na vypis haldy po odstraneni minimalneho prvku
 	VERTEX min = extractMin(&*heap, &*heapSize, &(*mapHeap));
 	printf("[%d %d] %d | HeapSize %d = %d Poloha\n", min.x, min.y, min.lenght, *heapSize, (*mapHeap)[min.x][min.y]);
 	printHeap(*heap, *heapSize, &(*mapHeap));
 }
 
 void delete(VERTEX** heap, int* heapSize, int i, int*** mapHeap) {
+							// odstranenie konkretneho prvku z haldy - tomuto prvku nastavi najmensia mozna hodnota a potom sa vymaze najmensi prvok
 	decrease(&*heap, i, -INF, &(*mapHeap));
-	extractMin(&*heap, &*heapSize, &(*mapHeap));
+	VERTEX temp = extractMin(&*heap, &*heapSize, &(*mapHeap));
 }
 
 // Funkcie pre Popolvara
 
-void top(VERTEX min, int* x, int* y) {
-	*x = min.x - 1;
-	*y = min.y;
-}
-
-void right(VERTEX min, int* x, int* y) {
-	*x = min.x;
-	*y = min.y + 1;
-}
-
-void bottom(VERTEX min, int* x, int* y) {
-	*x = min.x + 1;
-	*y = min.y;
-}
-
-void left(VERTEX min, int* x, int* y) {
-	*x = min.x;
-	*y = min.y - 1;
-}
-
-int validXY(int x, int y, int n, int m, int heapSize, int** mapHeap) {
-	if (x < n && x >= 0 && y < m && y >= 0 && mapHeap[x][y] <= heapSize)
-		return 1;
-	return 0;
-}
-
-int verticesLen(int x, int y, char** mapa) {
-	int set;
-	char map = mapa[x][y];
-	if (map == 'N')
-		return INF;
-	else if (map == 'H')
-		return 2;
-	else
-		return 1;
-}
-
-void reverse(int **path, int lenght) {
+void reverse(int** path, int lenght) {
+							// obratenie pola s cestou
 	lenght--;
 	int temp, start = 0;
 	while (start < lenght) {
@@ -181,81 +153,195 @@ void reverse(int **path, int lenght) {
 	}
 }
 
-void createGraph(){
+void transformMapToHeap(VERTEX** heap, int* heapSize, int*** mapHeap, int n, int m, char** mapa, int* dragonX, int* dragonY, int** princesses, int* princessCounter) {
+							// pretransformovanie grafu z mapy do binarnej haldy
+	int index = 0;
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++) {
+			(*heap)[index].x = i;
+			(*heap)[index].y = j;
+			(*heap)[index].lenght = INF;
+			(*heap)[index].parentX = -1;
+			(*heap)[index].parentY = -1;
+			(*mapHeap)[i][j] = index;
+			if (mapa[i][j] == 'D')
+			{
+				*dragonX = i;
+				*dragonY = j;
+			}
+			if (mapa[i][j] == 'P')
+			{
+				(*princesses)[(*princessCounter)++] = i;
+				(*princesses)[(*princessCounter)++] = j;
+			}
+			index++;
+		}
+	}
+	(*princessCounter) /= 2;
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			if (mapa[i][j] == 'N') {
+				delete(&(*heap), &(*heapSize), (*mapHeap)[i][j], &(*mapHeap));
+			}
+		}
+	}
+}
+
+void pathToDragonCreator(int** path, char** mapa, int dragonX, int dragonY, VERTEX* heap, int heapSize, int** mapHeap, int* dlzka_cesty) {
+							// najdenie cesty k drakovi
+	int count = 0;
+	VERTEX temp = heap[mapHeap[dragonX][dragonY]];
+
+	while (1)
+	{
+		(*path)[count++] = temp.x;
+		(*path)[count++] = temp.y;
+
+		if (temp.parentX == -1 || temp.parentY == -1)
+		{
+			break;
+		}
+		else
+		{
+			temp = heap[mapHeap[temp.parentX][temp.parentY]];
+		}
+	}
+	reverse(&(*path), count);
+	*dlzka_cesty = count / 2;
+}
+
+void top(VERTEX min, int* x, int* y) {
+							// posun na mape hore
+	*x = min.x - 1;
+	*y = min.y;
+}
+
+void right(VERTEX min, int* x, int* y) {
+							// posun na mape doprava
+	*x = min.x;
+	*y = min.y + 1;
+}
+
+void bottom(VERTEX min, int* x, int* y) {
+							// posun na mape dolu
+	*x = min.x + 1;
+	*y = min.y;
+}
+
+void left(VERTEX min, int* x, int* y) {
+							// posun na mape dolava
+	*x = min.x;
+	*y = min.y - 1;
+}
+
+int validXY(int x, int y, int n, int m, int heapSize, int** mapHeap) {
+							// funkcia kontrolujuca platnost novej suradnice, tj ze sa nenachadza policko mimo mapy a zaroven je v halde
+	if (x < n && x >= 0 && y < m && y >= 0 && mapHeap[x][y] <= heapSize)
+		return 1;
+	return 0;
+}
+
+int verticesLen(int x, int y, char** mapa) {
+							// funkcia na vratenie casovej dlzky policka
+	char map = mapa[x][y];
+	if (map == 'N')
+		return INF;
+	else if (map == 'H')
+		return 2;
+	else
+		return 1;
+}
+
+void vertextNewLenghtDjikstra(VERTEX** heap, int* heapSize, int*** mapHeap, int n, int m, char** mapa, int newX, int newY, VERTEX* min) {
+							// nastavenie novej dlzky pre vrchol v Djikstrovom algoritme
+	if (validXY(newX, newY, n, m, (*heapSize), (*mapHeap))) {
+		int id = (*mapHeap)[newX][newY];
+		int newLenght = (*min).lenght + verticesLen(newX, newY, mapa);
+		if ((*heap)[id].lenght > newLenght)
+		{
+			(*heap)[id].parentX = (*min).x;
+			(*heap)[id].parentY = (*min).y;
+			decrease(&(*heap), id, newLenght, &(*mapHeap));
+		}
+	}
 }
 
 void djikstra(VERTEX** heap, int* heapSize, int*** mapHeap, int n, int m, char **mapa) {
+							// Djikstrov algoritmus
 	while ((*heapSize) != 0) {
+
 		VERTEX min = extractMin(&(*heap), &(*heapSize), &(*mapHeap));
 		int index = (*mapHeap)[min.x][min.y];
 		int tx, ty, rx, ry, bx, by, lx, ly;
+
 		top(min, &tx, &ty);
 		right(min, &rx, &ry);
 		bottom(min, &bx, &by);
 		left(min, &lx, &ly);
 
-		//			printf("[%d %d] ma platnych susedov ", min.x, min.y);
+		vertextNewLenghtDjikstra(&(*heap), &(*heapSize), &(*mapHeap), n, m, mapa, tx, ty, &min);
 
-		if (validXY(tx, ty, n, m, (*heapSize), (*mapHeap))) {
-			//				printf("t[%d %d] ", tx, ty);
-			int id = (*mapHeap)[tx][ty];
-			int newLenght = min.lenght + verticesLen(tx, ty, mapa);
-			if ((*heap)[id].lenght > newLenght)
-			{
-				//heap[id].lenght = newLenght;
-				(*heap)[id].parentX = min.x;
-				(*heap)[id].parentY = min.y;
-				decrease(&(*heap), id, newLenght, &(*mapHeap));
-			}
-		}
-		if (validXY(rx, ry, n, m, (*heapSize), (*mapHeap))) {
-			//				printf("r[%d %d] ", rx, ry);
-			int id = (*mapHeap)[rx][ry];
-			int newLenght = min.lenght + verticesLen(rx, ry, mapa);
-			if ((*heap)[id].lenght > newLenght)
-			{
-				//heap[id].lenght = newLenght;
-				(*heap)[id].parentX = min.x;
-				(*heap)[id].parentY = min.y;
-				decrease(&(*heap), id, newLenght, &(*mapHeap));
-			}
-		}
-		if (validXY(bx, by, n, m, (*heapSize), (*mapHeap))) {
-			//				printf("b[%d %d] ", bx, by);
-			int id = (*mapHeap)[bx][by];
-			int newLenght = min.lenght + verticesLen(bx, by, mapa);
-			if ((*heap)[id].lenght > newLenght)
-			{
-				//heap[id].lenght = newLenght;
-				(*heap)[id].parentX = min.x;
-				(*heap)[id].parentY = min.y;
-				decrease(&(*heap), id, newLenght, &(*mapHeap));
-			}
-		}
-		if (validXY(lx, ly, n, m, (*heapSize), (*mapHeap))) {
-			//				printf("l[%d %d] ", lx, ly);
-			int id = (*mapHeap)[lx][ly];
-			int newLenght = min.lenght + verticesLen(lx, ly, mapa);
-			if ((*heap)[id].lenght > newLenght)
-			{
-				//heap[id].lenght = newLenght;
-				(*heap)[id].parentX = min.x;
-				(*heap)[id].parentY = min.y;
-				decrease(&(*heap), id, newLenght, &(*mapHeap));
-			}
-		}
-		//printf("\n");
+		vertextNewLenghtDjikstra(&(*heap), &(*heapSize), &(*mapHeap), n, m, mapa, rx, ry, &min);
+
+		vertextNewLenghtDjikstra(&(*heap), &(*heapSize), &(*mapHeap), n, m, mapa, bx, by, &min);
+
+		vertextNewLenghtDjikstra(&(*heap), &(*heapSize), &(*mapHeap), n, m, mapa, lx, ly, &min);
+
+		//if (validXY(tx, ty, n, m, (*heapSize), (*mapHeap))) {
+		//	int id = (*mapHeap)[tx][ty];
+		//	int newLenght = min.lenght + verticesLen(tx, ty, mapa);
+		//	if ((*heap)[id].lenght > newLenght)
+		//	{
+		//		(*heap)[id].parentX = min.x;
+		//		(*heap)[id].parentY = min.y;
+		//		decrease(&(*heap), id, newLenght, &(*mapHeap));
+		//	}
+		//}
+		//if (validXY(rx, ry, n, m, (*heapSize), (*mapHeap))) {
+		//	int id = (*mapHeap)[rx][ry];
+		//	int newLenght = min.lenght + verticesLen(rx, ry, mapa);
+		//	if ((*heap)[id].lenght > newLenght)
+		//	{
+		//		(*heap)[id].parentX = min.x;
+		//		(*heap)[id].parentY = min.y;
+		//		decrease(&(*heap), id, newLenght, &(*mapHeap));
+		//	}
+		//}
+		//if (validXY(bx, by, n, m, (*heapSize), (*mapHeap))) {
+		//	int id = (*mapHeap)[bx][by];
+		//	int newLenght = min.lenght + verticesLen(bx, by, mapa);
+		//	if ((*heap)[id].lenght > newLenght)
+		//	{
+		//		(*heap)[id].parentX = min.x;
+		//		(*heap)[id].parentY = min.y;
+		//		decrease(&(*heap), id, newLenght, &(*mapHeap));
+		//	}
+		//}
+		//if (validXY(lx, ly, n, m, (*heapSize), (*mapHeap))) {
+		//	int id = (*mapHeap)[lx][ly];
+		//	int newLenght = min.lenght + verticesLen(lx, ly, mapa);
+		//	if ((*heap)[id].lenght > newLenght)
+		//	{
+		//		(*heap)[id].parentX = min.x;
+		//		(*heap)[id].parentY = min.y;
+		//		decrease(&(*heap), id, newLenght, &(*mapHeap));
+		//	}
+		//}
 	}
 }
 
 void addToArray(int** des, int* src, int desCount, int srcCount) {
+							// pridanie zdrojoveho pola do cieloveho pola - spojenie 2 poli suradnic
 	for (int i = 0; i < srcCount; i++)
-	{
 		(*des)[i + desCount] = src[i];
-	}
 }
 
 void copyHeap(VERTEX *sHeap, VERTEX **dHeap, int **sMapHeap, int ***dMapHeap, int sHeapSize, int *dHeapSize, int n, int m) {
+							// iterativne kopirovanie haldy bez nutnosti jej opatovneho vytvarania
 	int capacity = n * m;
 	*dHeapSize = sHeapSize;
 	VERTEX* finalHeap = malloc(capacity * sizeof(VERTEX));
@@ -275,44 +361,22 @@ void copyHeap(VERTEX *sHeap, VERTEX **dHeap, int **sMapHeap, int ***dMapHeap, in
 	*dMapHeap = finalMapHeap;
 }
 
-//int pathCounter(VERTEX *heap, int **mapHeap, int startX, int startY, int endX, int endY) {
-//	int count = 0;
-//	VERTEX temp = heap[mapHeap[endX][endY]];
-//	while (temp.x != startX || temp.y != startY)
-//	{
-//		count++;
-//		if (temp.parentX < 0 || temp.parentY < 0)
-//		{
-//			printf("K princeznej neexistuje cesta!\n");
-//			printf("[%d %d] [%d %d]\n", startX, startY, endX, endY);
-//			return 0;
-//		}
-//		else
-//		{
-//			temp = heap[mapHeap[temp.parentX][temp.parentY]];
-//		}
-//	}
-//	return count;
-//}
-
-void exchange2(int* x, int* y)
-{
+void exchange2(int* x, int* y){
+							// vymena 2 integerov cez smerniky
 	int temp;
 	temp = *x;
 	*x = *y;
 	*y = temp;
 }
 
-int k = 0;
-
-void permute(int* Arr, int start, int size, int*** Permutations)
-{
+void permute(int* Arr, int start, int size, int*** Permutations){
+							// rekurzivna funkcia vytvarajuca pole permutacii
 	if (start == size) {
 		for (int i = 0; i <= size; i++)
 		{
-			(*Permutations)[k][i] = Arr[i];
+			(*Permutations)[numberOfPermutations][i] = Arr[i];
 		}
-		k++;
+		numberOfPermutations++;
 	}
 	else
 	{
@@ -326,6 +390,7 @@ void permute(int* Arr, int start, int size, int*** Permutations)
 }
 
 int factorial(int k) {
+							// iterativne ratanie hodnoty faktorialu
 	int factor = 1;
 	for (int i = 1; i <= k; i++)
 	{
@@ -334,7 +399,8 @@ int factorial(int k) {
 	return factor;
 }
 
-int* pathCreator(VERTEX *heap, int **mapHeap, int **path, int dlzka_cesty, int startX, int startY, int endX, int endY) {
+int* princessPathCreator(VERTEX *heap, int **mapHeap, int **path, int dlzka_cesty, int startX, int startY, int endX, int endY) {
+							// funkcia na vytvorenie cesty medzi 2 bodmi pomocou binarnej hlady
 	int count = 0;
 	VERTEX temp = heap[mapHeap[endX][endY]];
 	int* newPath = malloc(10000 * sizeof(int));
@@ -345,7 +411,7 @@ int* pathCreator(VERTEX *heap, int **mapHeap, int **path, int dlzka_cesty, int s
 		if (temp.parentX < 0 || temp.parentY < 0)
 		{
 			printf("K princeznej neexistuje cesta!\n");
-			printf("[%d %d] [%d %d]\n", startX, startY, endX, endY);
+			//printf("[%d %d] [%d %d]\n", startX, startY, endX, endY);
 			return 0;
 		}
 		else
@@ -360,15 +426,78 @@ int* pathCreator(VERTEX *heap, int **mapHeap, int **path, int dlzka_cesty, int s
 	return dlzka_cesty;
 }
 
+void findBestConfiguration(int matrixSize, int princessCounter, VERTEX* dragonHeap, int** dragonMapHeap, int* princesses, PRINCESS* pr, int** configuration) {
+	int** matrix = (int**)malloc(matrixSize * sizeof(int*));
+	for (int i = 0; i < (princessCounter + 1); i++) {
+		matrix[i] = (int*)malloc(matrixSize * sizeof(int));
+		memset(matrix[i], 0, matrixSize * sizeof(int));
+	}
+
+	for (int i = 0; i < princessCounter; i++)
+	{
+		matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].lenght;
+		matrix[i + 1][0] = matrix[0][i + 1];
+	}
+
+	for (int i = 0; i < princessCounter; i++)
+	{
+		for (int j = i + 1; j < princessCounter; j++)
+		{
+			matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
+			matrix[j + 1][i + 1] = matrix[i + 1][j + 1];
+		}
+	}
+
+	int newSize = matrixSize - 1;
+	int* Arr = malloc(newSize * sizeof(int));
+	for (int i = 0; i < newSize; i++)
+	{
+		Arr[i] = i + 1;
+	}
+
+	int factor = factorial(newSize);
+	int** Permutations = (int**)malloc(factor * sizeof(int*));
+	for (int i = 0; i < factor; i++) {
+		Permutations[i] = (int*)malloc(newSize * sizeof(int));
+	}
+
+	numberOfPermutations = 0;
+	permute(Arr, 0, newSize - 1, &Permutations);
+
+	int min = INF;
+
+	int* tempArray = malloc(matrixSize * sizeof(int));
+	for (int i = 0; i < factor; i++)
+	{
+		tempArray[0] = 0;
+		for (int j = 1; j < matrixSize; j++)
+		{
+			tempArray[j] = Permutations[i][j - 1];
+		}
+
+		int l = 1;
+		int tempMin = 0;
+		for (int k = 0; k < matrixSize - 1; k++)
+		{
+			tempMin += matrix[tempArray[k]][tempArray[l]];
+			l++;
+		}
+		if (min > tempMin)
+		{
+			min = tempMin;
+			for (int i = 0; i < matrixSize; i++)
+			{
+				(*configuration)[i] = tempArray[i];
+			}
+		}
+	}
+}
+
 int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 	// Zadanim pozadovana funkcia
-
 	*dlzka_cesty = 0;
 
-	int capacity = n * m;
-	int index = 0;
-
-	VERTEX* heap = malloc(capacity * sizeof(VERTEX));
+	VERTEX* heap = malloc(n * m * sizeof(VERTEX));
 	int heapSize = n * m;
 
 	int** mapHeap = (int**)malloc(n * sizeof(int*));
@@ -378,258 +507,226 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 	int* princesses = malloc(5 * 2 * sizeof(int));
 	int princessCounter = 0;
 
-	int dragonX, dragonY;
-		for (int i = 0; i < n; i++)
+	int dragonX = -1, dragonY = -1;
+
+	transformMapToHeap(&heap, &heapSize, &mapHeap, n, m, mapa, &dragonX, &dragonY, &princesses, &princessCounter);
+
+	//for (int i = 0; i < n; i++)
+	//{
+	//	for (int j = 0; j < m; j++) {
+	//		heap[index].x = i;
+	//		heap[index].y = j;
+	//		heap[index].lenght = INF;
+	//		heap[index].parentX = -1;
+	//		heap[index].parentY = -1;
+	//		mapHeap[i][j] = index;
+	//		if (mapa[i][j] == 'D')
+	//		{
+	//			dragonX = i;
+	//			dragonY = j;
+	//		}
+	//		if (mapa[i][j] == 'P')
+	//		{
+	//			princesses[princessCounter++] = i;
+	//			princesses[princessCounter++] = j;
+	//		}
+	//		index++;
+	//	}
+	//}
+	//princessCounter /= 2;
+
+	//for (int i = 0; i < n; i++)
+	//{
+	//	for (int j = 0; j < m; j++)
+	//	{
+	//		if (mapa[i][j] == 'N') {
+	//			delete(&heap, &heapSize, mapHeap[i][j], &mapHeap);
+	//		}
+	//	}
+	//}
+
+	if (mapa[0][0] == 'N')
+	{
+		printf("Popolvar sa nedostal na mapu, pretoze zacina nepriechodnou prekazkou!\n");
+		*dlzka_cesty = 0;
+		return NULL;
+	}
+
+	if (dragonX == -1 || dragonY == -1)
+	{
+		printf("Na mape sa nenachadza drak!\n");
+		*dlzka_cesty = 0;
+		return NULL;
+	}
+
+	VERTEX* originalHeap;
+	int originalHeapSize;
+	int** originalMapHeap;
+	copyHeap(heap, &originalHeap, mapHeap, &originalMapHeap, heapSize, &originalHeapSize, n, m);
+
+	VERTEX* dragonHeap;
+	int dragonHeapSize;
+	int** dragonMapHeap;
+	copyHeap(heap, &dragonHeap, mapHeap, &dragonMapHeap, heapSize, &dragonHeapSize, n, m);
+
+	decrease(&heap, mapHeap[0][0], verticesLen(0, 0, mapa), &mapHeap);
+	djikstra(&heap, &heapSize, &mapHeap, n, m, mapa);
+
+	int* path = malloc(30000 * sizeof(int));						// Dlzku treba ale nastavovat dynamicky
+	
+	pathToDragonCreator(&path, mapa, dragonX, dragonY, heap, heapSize, mapHeap, &*dlzka_cesty);
+
+	//VERTEX temp = heap[mapHeap[dragonX][dragonY]];
+	//int count = 0;
+	//while (1)
+	//{
+	//	path[count++] = temp.x;
+	//	path[count++] = temp.y;
+
+	//	timeDragon += verticesLen(temp.x, temp.y, mapa);
+
+	//	if (temp.parentX == -1 || temp.parentY == -1)
+	//	{
+	//		break;
+	//	}
+	//	else
+	//	{
+	//		temp = heap[mapHeap[temp.parentX][temp.parentY]];
+	//	}
+	//}
+	//reverse(&path, count);
+	//*dlzka_cesty = count / 2;
+
+	if (*dlzka_cesty == 1)
+	{
+		printf("K drakovi neexistuje cesta!\n");
+		*dlzka_cesty = 0;
+		return NULL;
+	}
+
+	int timeDragon = heap[mapHeap[dragonX][dragonY]].lenght;
+
+	if (timeDragon > t)
+	{
+		printf("Drak sa zobudil a zjedol princezne!\n");
+		*dlzka_cesty = 0;
+		return NULL;
+	}
+
+	decrease(&dragonHeap, dragonMapHeap[dragonX][dragonY], 1, &dragonMapHeap);
+	djikstra(&dragonHeap, &dragonHeapSize, &dragonMapHeap, n, m, mapa);
+
+	if (princessCounter == 1) {
+		*dlzka_cesty = princessPathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, princesses[0], princesses[1]);
+	}
+	else
+	{
+		PRINCESS* pr = malloc(princessCounter * sizeof(PRINCESS));
+		for (int i = 0; i < princessCounter; i++)
 		{
-			for (int j = 0; j < m; j++) {
-				heap[index].x = i;
-				heap[index].y = j;
-				heap[index].lenght = INF;
-				heap[index].parentX = -1;
-				heap[index].parentY = -1;
-				mapHeap[i][j] = index;
-				if (mapa[i][j] == 'D')
-				{
-					dragonX = i;
-					dragonY = j;
-				}
-				if (mapa[i][j] == 'P')
-				{
-					princesses[princessCounter++] = i;
-					princesses[princessCounter++] = j;
-				}
-				index++;
-			}
-		}
-		princessCounter /= 2;
-		
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < m; j++)
-			{
-				if (mapa[i][j] == 'N') {
-					delete(&heap, &heapSize, mapHeap[i][j], &mapHeap);
-				}
-			}
+			pr[i].x = princesses[i * 2];
+			pr[i].y = princesses[i * 2 + 1];
+			copyHeap(originalHeap, &(pr[i].heap), originalMapHeap, &(pr[i].mapHeap), originalHeapSize, &(pr[i].heapSize), n, m);
+			decrease(&(pr[i].heap), pr[i].mapHeap[princesses[i * 2]][princesses[i * 2 + 1]], 1, &(pr[i].mapHeap));
+			djikstra(&(pr[i].heap), &(pr[i].heapSize), &(pr[i].mapHeap), n, m, mapa);
 		}
 
-		//VERTEX* dragonHeap = malloc(capacity * sizeof(VERTEX));
-		//int dragonHeapSize = n * m;
-		//for (int i = 0; i < dragonHeapSize; i++)
-		//{
-		//	dragonHeap[i] = heap[i];
+		int matrixSize = princessCounter + 1;
+		int* configuration = malloc(matrixSize * sizeof(int));
+
+		findBestConfiguration(matrixSize, princessCounter, dragonHeap, dragonMapHeap, princesses, pr, &configuration);
+
+		//int** matrix = (int**)malloc(matrixSize * sizeof(int*));
+		//for (int i = 0; i < (princessCounter + 1); i++) {
+		//	matrix[i] = (int*)malloc(matrixSize * sizeof(int));
+		//	memset(matrix[i], 0, matrixSize * sizeof(int));
 		//}
-		//dragonHeapSize = heapSize;
 
-		//int** dragonMapHeap = (int**)malloc(n * sizeof(int*));
-		//for (int i = 0; i < n; i++) {
-		//	dragonMapHeap[i] = (int*)malloc(m * sizeof(int));
-		//	for (int j = 0; j < m; j++)
+		//for (int i = 0; i < princessCounter; i++)
+		//{
+		//	matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].lenght;
+		//	matrix[i + 1][0] = matrix[0][i + 1];
+		//}
+
+		//for (int i = 0; i < princessCounter; i++)
+		//{
+		//	for (int j = i + 1; j < princessCounter; j++)
 		//	{
-		//		dragonMapHeap[i][j] = mapHeap[i][j];
+		//		matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
+		//		matrix[j + 1][i + 1] = matrix[i + 1][j + 1];
 		//	}
 		//}
 
-		VERTEX* originalHeap;
-		int originalHeapSize;
-		int** originalMapHeap;
-		copyHeap(heap, &originalHeap, mapHeap, &originalMapHeap, heapSize, &originalHeapSize, n, m);
+		//int newSize = matrixSize - 1;
+		//int* Arr = malloc(newSize * sizeof(int));
+		//for (int i = 0; i < newSize; i++)
+		//{
+		//	Arr[i] = i + 1;
+		//}
 
-		VERTEX* dragonHeap;
-		int dragonHeapSize;
-		int** dragonMapHeap;
-		copyHeap(heap, &dragonHeap, mapHeap, &dragonMapHeap, heapSize, &dragonHeapSize, n, m);
+		//int factor = factorial(newSize);
+		//int** Permutations = (int**)malloc(factor * sizeof(int*));
+		//for (int i = 0; i < factor; i++) {
+		//	Permutations[i] = (int*)malloc(newSize * sizeof(int));
+		//}
 
-		decrease(&heap, mapHeap[0][0], verticesLen(0, 0, mapa), &mapHeap);
-		djikstra(&heap, &heapSize, &mapHeap, n, m, mapa);
+		//numberOfPermutations = 0;
+		//permute(Arr, 0, newSize - 1, &Permutations);
 
-		int* path = malloc(10000 * sizeof(int));						// Dlzku treba ale nastavovat dynamicky
-		VERTEX temp = heap[mapHeap[dragonX][dragonY]];
-		int count = 0;
-		while (1)
+		//int min = INF;
+
+		//int* tempArray = malloc(matrixSize * sizeof(int));
+		//for (int i = 0; i < factor; i++)
+		//{
+		//	tempArray[0] = 0;
+		//	for (int j = 1; j < matrixSize; j++)
+		//	{
+		//		tempArray[j] = Permutations[i][j - 1];
+		//	}
+
+		//	int l = 1;
+		//	int tempMin = 0;
+		//	for (int k = 0; k < matrixSize - 1; k++)
+		//	{
+		//		tempMin += matrix[tempArray[k]][tempArray[l]];
+		//		l++;
+		//	}
+		//	if (min > tempMin)
+		//	{
+		//		min = tempMin;
+		//		for (int i = 0; i < matrixSize; i++)
+		//		{
+		//			configuration[i] = tempArray[i];
+		//		}
+		//	}
+		//}
+
+		int princessIndex = configuration[1] - 1;
+		int prinX = princesses[princessIndex * 2];
+		int prinY = princesses[princessIndex * 2 + 1];
+
+		*dlzka_cesty = princessPathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, prinX, prinY);
+		if (*dlzka_cesty == 0)
 		{
-			path[count++] = temp.x;
-			path[count++] = temp.y;
-
-			if (temp.parentX == -1 || temp.parentY == -1)
-			{
-				break;
-			}
-			else
-			{
-				temp = heap[mapHeap[temp.parentX][temp.parentY]];
-			}	
+			return NULL;
 		}
-		reverse(&path, count);
-		*dlzka_cesty = count / 2;
 
-		if (*dlzka_cesty == 1)
+		for (int i = 2; i < matrixSize; i++)
 		{
-			printf("K drakovi neexistuje cesta!\n");
-			*dlzka_cesty = 0;
-			return path;
+			int oldPrincessIndex = configuration[i - 1] - 1;
+			princessIndex = configuration[i] - 1;
+
+			prinX = princesses[princessIndex * 2];
+			prinY = princesses[princessIndex * 2 + 1];
+
+			*dlzka_cesty = princessPathCreator(pr[oldPrincessIndex].heap, pr[oldPrincessIndex].mapHeap, &path, *dlzka_cesty, pr[oldPrincessIndex].x, pr[oldPrincessIndex].y, prinX, prinY);
+			if (*dlzka_cesty == 0)
+			{
+				return NULL;
+			}
 		}
-
-
-		decrease(&dragonHeap, dragonMapHeap[dragonX][dragonY], 1, &dragonMapHeap);
-		djikstra(&dragonHeap, &dragonHeapSize, &dragonMapHeap, n, m, mapa);
-
-		if (princessCounter == 1) {
-			//int* dragonPath = malloc(1000 * sizeof(int));						// Dlzku treba ale nastavovat dynamicky
-			//int count2 = 0;
-			//VERTEX temp2 = dragonHeap[dragonMapHeap[princesses[0]][princesses[1]]];
-			//while (temp2.x != dragonX || temp2.y != dragonY)
-			//{
-			//	//printf("[%d %d]\n", temp.y, temp.x);
-			//	dragonPath[count2++] = temp2.x;
-			//	dragonPath[count2++] = temp2.y;
-
-			//	if (temp2.parentX < 0 || temp2.parentY < 0)
-			//	{
-			//		printf("K princeznej neexistuje cesta!\n");
-			//		*dlzka_cesty = 0;
-			//		return path;
-			//	}
-			//	else 
-			//	{
-			//		temp2 = dragonHeap[dragonMapHeap[temp2.parentX][temp2.parentY]];
-			//	}
-			//}
-			//reverse(&dragonPath, count2);
-			//addToArray(&path, dragonPath, count, count2);
-			//*dlzka_cesty += count2 / 2;
-
-			*dlzka_cesty = pathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, princesses[0], princesses[1]);
-		}
-		else
-		{
-			PRINCESS* pr = malloc(princessCounter * sizeof(PRINCESS));
-			for (int i = 0; i < princessCounter; i++)
-			{
-				pr[i].x = princesses[i * 2];
-				pr[i].y = princesses[i * 2 + 1];
-				copyHeap(originalHeap, &(pr[i].heap), originalMapHeap, &(pr[i].mapHeap), originalHeapSize, &(pr[i].heapSize), n, m);
-				decrease(&(pr[i].heap), pr[i].mapHeap[princesses[i * 2]][princesses[i * 2 + 1]], 1, &(pr[i].mapHeap));
-				djikstra(&(pr[i].heap), &(pr[i].heapSize), &(pr[i].mapHeap), n, m, mapa);
-			}
-
-			int matrixSize = princessCounter + 1;
-			int** matrix = (int**)malloc(matrixSize * sizeof(int*));
-			for (int i = 0; i < (princessCounter + 1); i++) {
-				matrix[i] = (int*)malloc(matrixSize * sizeof(int));
-				memset(matrix[i], 0, matrixSize * sizeof(int));
-			}
-
-			for (int i = 0; i < princessCounter; i++)
-			{
-				matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].lenght;
-				matrix[i + 1][0] = matrix[0][i + 1];
-			}
-
-			for (int i = 0; i < princessCounter; i++)
-			{
-				for (int j = i + 1; j < princessCounter; j++)
-				{
-					matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
-					matrix[j + 1][i + 1] = matrix[i + 1][j + 1];
-				}
-			}
-
-			//for (int i = 0; i < matrixSize; i++)
-			//{
-			//	for (int j = 0; j < matrixSize; j++)
-			//	{
-			//		printf("%2d ", matrix[i][j]);
-			//	}
-			//	printf("\n");
-			//}
-			//printf("\n");
-
-			int newSize = matrixSize - 1;
-			int* Arr = malloc(newSize * sizeof(int));
-			for (int i = 0; i < newSize; i++)
-			{
-				Arr[i] = i + 1;
-			}
-
-
-			int factor = factorial(newSize);
-			int** Permutations = (int**)malloc(factor * sizeof(int*));
-			for (int i = 0; i < factor; i++) {
-				Permutations[i] = (int*)malloc(newSize * sizeof(int));
-				//		memset(matrix[i], 0, newSize * sizeof(int));
-			}
-
-			k = 0;
-			permute(Arr, 0, newSize - 1, &Permutations);
-
-			//printf("-------------\n");
-			//for (int i = 0; i < factor; i++)
-			//{
-			//	for (int j = 0; j < newSize; j++)
-			//	{
-			//		printf("%d ", Permutations[i][j]);
-			//	}
-			//	printf("\n");
-			//}
-
-			//printf("-------------\n");
-
-			int min = INF;
-			int* configuration = malloc(matrixSize * sizeof(int));
-
-			int* tempArray = malloc(matrixSize * sizeof(int));
-			for (int i = 0; i < factor; i++)
-			{
-				tempArray[0] = 0;
-				for (int j = 1; j < matrixSize; j++)
-				{
-					tempArray[j] = Permutations[i][j - 1];
-				}
-				
-				int l = 1;
-				int tempMin = 0;
-				for (int k = 0; k < matrixSize - 1; k++)
-				{
-					tempMin += matrix[tempArray[k]][tempArray[l]];
-//					printf("%d ", matrix[tempArray[k]][tempArray[l]]);
-					l++;
-				}
-				if (min > tempMin)
-				{
-					min = tempMin;
-					for (int i = 0; i < matrixSize; i++)
-					{
-						configuration[i] = tempArray[i];
-					}
-				}
-			}
-			
-			int princessIndex = configuration[1] - 1;
-			int prinX = princesses[princessIndex * 2];
-			int prinY = princesses[princessIndex * 2 + 1];
-//			printf("%d %d\n", prinX, prinY);
-			*dlzka_cesty = pathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, prinX, prinY);
-
-			for (int i = 2; i < matrixSize; i++)
-			{
-				int oldPrincessIndex = configuration[i - 1] - 1;
-				princessIndex = configuration[i] - 1;
-
-				prinX = princesses[princessIndex * 2];
-				prinY = princesses[princessIndex * 2 + 1];
-
-//				printf("%d %d\n", pr[oldPrincessIndex].x, pr[oldPrincessIndex].y);
-//				printf("%d %d\n", prinX, prinY);
-				*dlzka_cesty = pathCreator(pr[oldPrincessIndex].heap, pr[oldPrincessIndex].mapHeap, &path, *dlzka_cesty, pr[oldPrincessIndex].x, pr[oldPrincessIndex].y, prinX, prinY);
-
-//				printf("%d %d\n", prinX, prinY);
-			}
-//			printf("-------------\n");
-		}
-
-//		printf("%d\n", princessCounter);
-		return path;
+	}
+	return path;
 }
 
 int main()
@@ -659,11 +756,13 @@ int main()
 	//f = fopen("kritickaMapa.txt", "r");
 	//f = fopen("vzorovyVstup.txt", "r");
 
+	f = fopen("Meranie_casu.txt", "r");
+
 	//f = fopen("vstup1Delincak.txt", "r");
 	//f = fopen("vstup2Delincak.txt", "r");
 	//f = fopen("vstup3Delincak.txt", "r");
 
-	f = fopen("vstup0Buban.txt", "r");
+	//f = fopen("vstup0Buban.txt", "r");
 	//f = fopen("vstup1Buban.txt", "r");
 	//f = fopen("vstup2Buban.txt", "r");
 	//f = fopen("vstup3Buban.txt", "r");
@@ -690,7 +789,15 @@ int main()
 		}
 	}
 	fclose(f);
+
+	clock_t time;
+	time = clock();
+
 	cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
+
+	time = clock() - time;
+	double time_taken = ((double)time) / CLOCKS_PER_SEC; // in seconds 
+//	printf("zachran_princezne() took %f seconds to execute \n", time_taken);
 
 	cas = 0;
 	for (i = 0; i < dlzka_cesty; i++) {
