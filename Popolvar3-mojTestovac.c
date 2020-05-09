@@ -602,7 +602,7 @@ int main()
 			" 8 - mapa 42x70 P5\n 9 - maximalna mapa 100x100 P1\n10 - maximalna mapa 100x100 P3\n"
 			"11 - maximalna mapa 100x100 P5\n12 - ina maximalna mapa 100x100 P5\n13 - mapa 6x15 P3 pre ukazku spravneho poradia zachrany\n"
 			"14 - mapa 11x11 P5 s nedostatkom casu na zabitie draka\n15 - mapa 15x15 P5 - nedostupna princezna\n"
-			"16 - mapa 9x9 P3 - nedostupny drak\n------------------------------\n");
+			"16 - mapa 9x9 P3 - nedostupny drak\n17 - mapa 2x3 P5 - plna mapa\n------------------------------\n");
 		scanf("%d", &test);
 		dlzka_cesty = 0;
 		n = m = t = 0;
@@ -761,6 +761,16 @@ int main()
 			break;
 		case 16: //pridajte vlastne testovacie vzorky
 			f = fopen("16_9x9-3nedostupnyDrak.txt", "r");
+			if (f)
+				fscanf(f, "%d %d %d", &n, &m, &t);
+			else
+				continue;
+			mapaZoSuboru(&mapa, n, m, f);
+			fclose(f);
+			cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
+			break;
+		case 17: //pridajte vlastne testovacie vzorky
+			f = fopen("17_2x3-5.txt", "r");
 			if (f)
 				fscanf(f, "%d %d %d", &n, &m, &t);
 			else
