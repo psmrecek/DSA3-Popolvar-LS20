@@ -8,7 +8,7 @@
 typedef struct vertex {		// struktura vrcholu v halde
 	int x, y;				// indexy do reprezentacie grafu
 	int parentX, parentY;	// indexy na rodica
-	int lenght;				// dlzka cesty
+	int length;				// dlzka cesty
 }VERTEX;
 
 typedef struct princess {	// struktura konkretnej princeznej
@@ -35,7 +35,7 @@ int getRight(int i) {		// vrati index praveho potomka v binarnej halde
 }
 
 int getMin(VERTEX** heap) {	// vrati minimalny prvok v binarnej halde (pracujem s haldou vrcholou, ktora je zoradena podla dlzky cesty k vrcholu)
-	return (*heap)[0].lenght;
+	return (*heap)[0].length;
 }
 
 void exchange(VERTEX* a, VERTEX* b, int*** mapHeap) {
@@ -56,7 +56,7 @@ void fixHeapUp(VERTEX** heap, int fix, int*** mapHeap) {
 	if (parent < 0)
 		return;
 
-	while (fix != 0 && (*heap)[parent].lenght > (*heap)[fix].lenght) {
+	while (fix != 0 && (*heap)[parent].length > (*heap)[fix].length) {
 		exchange(&(*heap)[parent], &(*heap)[fix], &(*mapHeap));
 
 		fix = parent;
@@ -66,13 +66,13 @@ void fixHeapUp(VERTEX** heap, int fix, int*** mapHeap) {
 
 void insert(VERTEX** heap, int* heapSize, int key, int*** mapHeap) {
 							// vlozenie prvku do haldy
-	(*heap)[(*heapSize)++].lenght = key;
+	(*heap)[(*heapSize)++].length = key;
 	fixHeapUp(&*heap, *heapSize - 1, &(*mapHeap));
 }
 
 void decrease(VERTEX** heap, int i, int key, int*** mapHeap) {
 							// zmensenie kluca konkretneho prvku v halde a nasledna oprava haldy
-	(*heap)[i].lenght = key;
+	(*heap)[i].length = key;
 	fixHeapUp(*&heap, i, &(*mapHeap));
 }
 
@@ -82,12 +82,12 @@ void heapify(VERTEX** heap, int heapSize, int fix, int*** mapHeap) {
 	int right = getRight(fix);
 	int min;
 
-	if (left < heapSize && (*heap)[left].lenght < (*heap)[fix].lenght)
+	if (left < heapSize && (*heap)[left].length < (*heap)[fix].length)
 		min = left;
 	else
 		min = fix;
 
-	if (right < heapSize && (*heap)[right].lenght < (*heap)[min].lenght)
+	if (right < heapSize && (*heap)[right].length < (*heap)[min].length)
 		min = right;
 	if (min != fix) {
 		exchange(&(*heap)[fix], &(*heap)[min], &(*mapHeap));
@@ -121,14 +121,14 @@ VERTEX extractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
 void printHeap(VERTEX* heap, int heapSize, int*** mapHeap) {
 							// pomocna funkcia na vypis aktualne celej haldy
 	for (int i = 0; i < heapSize; i++)
-		printf("[%d %d] %d | Poradie %d = %d mapHeap\n", heap[i].x, heap[i].y, heap[i].lenght, i, (*mapHeap)[heap[i].x][heap[i].y]);
+		printf("[%d %d] %d | Poradie %d = %d mapHeap\n", heap[i].x, heap[i].y, heap[i].length, i, (*mapHeap)[heap[i].x][heap[i].y]);
 	printf("\n");
 }
 
 void printExtractMin(VERTEX** heap, int* heapSize, int*** mapHeap) {
 							// pomocna funkcia na vypis haldy po odstraneni minimalneho prvku
 	VERTEX min = extractMin(&*heap, &*heapSize, &(*mapHeap));
-	printf("[%d %d] %d | HeapSize %d = %d Poloha\n", min.x, min.y, min.lenght, *heapSize, (*mapHeap)[min.x][min.y]);
+	printf("[%d %d] %d | HeapSize %d = %d Poloha\n", min.x, min.y, min.length, *heapSize, (*mapHeap)[min.x][min.y]);
 	printHeap(*heap, *heapSize, &(*mapHeap));
 }
 
@@ -161,7 +161,7 @@ void transformMapToHeap(VERTEX** heap, int* heapSize, int*** mapHeap, int n, int
 		for (int j = 0; j < m; j++) {
 			(*heap)[index].x = i;
 			(*heap)[index].y = j;
-			(*heap)[index].lenght = INF;
+			(*heap)[index].length = INF;
 			(*heap)[index].parentX = -1;
 			(*heap)[index].parentY = -1;
 			(*mapHeap)[i][j] = index;
@@ -265,8 +265,8 @@ void vertextNewLenghtDjikstra(VERTEX** heap, int* heapSize, int*** mapHeap, int 
 							// nastavenie novej dlzky pre vrchol v Djikstrovom algoritme
 	if (validXY(newX, newY, n, m, (*heapSize), (*mapHeap))) {
 		int id = (*mapHeap)[newX][newY];
-		int newLenght = (*min).lenght + verticesLen(newX, newY, mapa);
-		if ((*heap)[id].lenght > newLenght)
+		int newLenght = (*min).length + verticesLen(newX, newY, mapa);
+		if ((*heap)[id].length > newLenght)
 		{
 			(*heap)[id].parentX = (*min).x;
 			(*heap)[id].parentY = (*min).y;
@@ -398,7 +398,7 @@ void findBestConfiguration(int matrixSize, int princessCounter, VERTEX* dragonHe
 
 	for (int i = 0; i < princessCounter; i++)							// nastavenie hodnot - dlzok ciest v matici susednosti medzi drakom a princeznami
 	{
-		matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].lenght;
+		matrix[0][i + 1] = dragonHeap[dragonMapHeap[princesses[i * 2]][princesses[i * 2 + 1]]].length;
 		matrix[i + 1][0] = matrix[0][i + 1];
 	}
 
@@ -406,7 +406,7 @@ void findBestConfiguration(int matrixSize, int princessCounter, VERTEX* dragonHe
 	{
 		for (int j = i + 1; j < princessCounter; j++)
 		{
-			matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].lenght;
+			matrix[i + 1][j + 1] = pr[i].heap[pr[i].mapHeap[princesses[j * 2]][princesses[j * 2 + 1]]].length;
 			matrix[j + 1][i + 1] = matrix[i + 1][j + 1];
 		}
 	}
@@ -515,7 +515,7 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 		return NULL;
 	}
 
-	if (heap[mapHeap[dragonX][dragonY]].lenght > t)
+	if (heap[mapHeap[dragonX][dragonY]].length > t)
 	{
 		printf("Drak sa zobudil a zjedol princezne!\n");
 		*dlzka_cesty = 0;
@@ -528,6 +528,10 @@ int* zachran_princezne(char** mapa, int n, int m, int t, int* dlzka_cesty) {
 	if (princessCounter == 1) 
 	{	// Ak je pocet princezien 1, vytvori priamo cestu od draka k princeznej a funkcia konci
 		*dlzka_cesty = princessPathCreator(dragonHeap, dragonMapHeap, &path, *dlzka_cesty, dragonX, dragonY, princesses[0], princesses[1]);
+		if (*dlzka_cesty == 0)
+		{
+			return NULL;
+		}
 	}
 	else 
 	{	// Ak je princezien viac ako 1, vytvori pole princezien, kde kazda princezna ma svoju haldu s pociatocnym polickom rovnakym ako poloha princeznej na mape
@@ -600,7 +604,7 @@ int main()
 		printf(" 1 - vzorovy test - nacitanie preddefinovanej mapy 10x10 P3 zo suboru\n 2 - minimalna mapa 2x1 P1\n 3 - minimalna mapa 1x2 P1\n"
 			" 4 - mapa 15x8 P1\n 5 - mapa 30x22 P2\n 6 - mapa 25x35 P3\n 7 - mapa 50x75 P4\n"
 			" 8 - mapa 42x70 P5\n 9 - maximalna mapa 100x100 P1\n10 - maximalna mapa 100x100 P3\n"
-			"11 - maximalna mapa 100x100 P5\n12 - ina maximalna mapa 100x100 P5\n13 - mapa 6x15 P3 pre ukazku spravneho poradia zachrany\n"
+			"11 - maximalna mapa 100x100 P5\n12 - ina maximalna mapa 100x100 P5\n13 - mapa 6x15 P4 pre ukazku spravneho poradia zachrany\n"
 			"14 - mapa 11x11 P5 s nedostatkom casu na zabitie draka\n15 - mapa 15x15 P5 - nedostupna princezna\n"
 			"16 - mapa 9x9 P3 - nedostupny drak\n17 - mapa 2x3 P5 - plna mapa\n------------------------------\n");
 		scanf("%d", &test);
@@ -730,7 +734,7 @@ int main()
 			cesta = zachran_princezne(mapa, n, m, t, &dlzka_cesty);
 			break;
 		case 13: //pridajte vlastne testovacie vzorky
-			f = fopen("13_6x15-3spravnePoradie.txt", "r");
+			f = fopen("13_6x15-4spravnePoradie.txt", "r");
 			if (f)
 				fscanf(f, "%d %d %d", &n, &m, &t);
 			else
