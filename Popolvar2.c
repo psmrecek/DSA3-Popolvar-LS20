@@ -639,6 +639,7 @@
 //	//f = fopen("vstup9Buban.txt", "r");
 //	//f = fopen("vstupMini0Buban.txt", "r");
 //	//f = fopen("vstupMini1Buban.txt", "r");
+//	//f = fopen("Buban_vstupChyba.txt", "r");
 //
 //	if (f)
 //		fscanf(f, "%d %d %d", &n, &m, &t);
